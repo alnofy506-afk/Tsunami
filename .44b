@@ -1,0 +1,167 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "سكربت تسونامي",
+   LoadingTitle = "جاري التشغيل...",
+   LoadingSubtitle = "Made by ع",
+   ConfigurationSaving = { Enabled = false }
+})
+
+-- إظهار رسالة تنبيه عند بداية التشغيل
+Rayfield:Notify({
+    Title = "تنبية",
+    Content = "هذا السكربت تجريبي حالياً \Made by ع",
+    Duration = 5,
+    Image = 4483362458,
+})
+
+local MainTab = Window:CreateTab("قائمة التحكم", 4483362458)
+
+
+-- متغيرات التحكم
+_G.AutoArcade = false
+_G.AutoDefault = false
+_G.AutoCollectMoney = false
+_G.AutoATM = false
+
+-- وظيفة جلب الـ Plot ID تلقائياً
+local function getMyPlotID()
+    local player = game.Players.LocalPlayer
+    local foundID = nil
+    pcall(function()
+        for _, plot in pairs(workspace:WaitForChild("Plots"):GetChildren()) do
+            if plot:FindFirstChild("Owner") and plot.Owner.Value == player then
+                foundID = plot.Name
+            end
+        end
+    end)
+    return foundID or "{02431b3a-5fcf-40e4-90aa-220317656166}"
+end
+
+-- وظيفة التنبيه الموحدة مع رسالة "تجريبي"
+local function sendStatusNotify(title, status)
+    Rayfield:Notify({
+        Title = title,
+        Content = status .. "",
+        Duration = 3,
+        Image = 4483362458,
+    })
+end
+
+-- 1. تجميع الأموال
+MainTab:CreateToggle({
+   Name = "تجميع الأموال تلقائياً",
+   CurrentValue = false,
+   Flag = "CollectMoneyToggle", 
+   Callback = function(Value)
+       _G.AutoCollectMoney = Value
+       local statusText = Value and "تم التشغيل ✅" or "تم الإيقاف ❌"
+       sendStatusNotify("تجميع الأموال", statusText)
+       
+       if Value then
+           task.spawn(function()
+               while _G.AutoCollectMoney do
+                   local currentPlotID = getMyPlotID()
+                   for i = 1, 36 do
+                       if not _G.AutoCollectMoney then break end
+                       pcall(function()
+                           game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RF/Plot.PlotAction"):InvokeServer("Collect Money", currentPlotID, tostring(i))
+                       end)
+                       task.wait(0.01)
+                   end
+                   task.wait(0.5)
+               end
+           end)
+       end
+   end,
+})
+
+-- 2. زر الـ ATM (إيداع + دمج)
+MainTab:CreateToggle({
+   Name = "Money (ATM)",
+   CurrentValue = false,
+   Flag = "ATMToggle",
+   Callback = function(Value)
+       _G.AutoATM = Value
+       local statusText = Value and "تم التشغيل ✅" or "تم الإيقاف ❌"
+       sendStatusNotify("نظام الـ ATM", statusText)
+       
+       if Value then
+           task.spawn(function()
+               local atmMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("ATM")
+               local net = game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RF/SpawnMachine.Action")
+               while _G.AutoATM do
+                   pcall(function()
+                       net:InvokeServer("Deposit", atmMachine)
+                       net:InvokeServer("Combine", atmMachine)
+                   end)
+                   task.wait(0.5)
+               end
+           end)
+       end
+   end,
+})
+
+-- 3. زر الأركيد (إيداع + دمج)
+MainTab:CreateToggle({
+   Name = "Arcade",
+   CurrentValue = false,
+   Flag = "ArcadeToggle", 
+   Callback = function(Value)
+       _G.AutoArcade = Value
+       local statusText = Value and "تم التشغيل ✅" or "تم الإيقاف ❌"
+       sendStatusNotify("نظام الأركيد", statusText)
+       
+       if Value then
+           task.spawn(function()
+               local arcadeMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Arcade")
+               local net = game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RF/SpawnMachine.Action")
+               while _G.AutoArcade do
+                   pcall(function()
+                       net:InvokeServer("Deposit", arcadeMachine)
+                       net:InvokeServer("Combine", arcadeMachine)
+                   end)
+                   task.wait(0.4)
+               end
+           end)
+       end
+   end,
+})
+
+-- 4. زر الديفولت (إيداع + دمج)
+MainTab:CreateToggle({
+   Name = "Default",
+   CurrentValue = false,
+   Flag = "DefaultToggle", 
+   Callback = function(Value)
+       _G.AutoDefault = Value
+       local statusText = Value and "تم التشغيل ✅" or "تم الإيقاف ❌"
+       sendStatusNotify("نظام Default", statusText)
+       
+       if Value then
+           task.spawn(function()
+               local defaultMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Default")
+               local net = game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RF/SpawnMachine.Action")
+               while _G.AutoDefault do
+                   pcall(function()
+                       net:InvokeServer("Deposit", defaultMachine)
+                       net:InvokeServer("Combine", defaultMachine)
+                   end)
+                   task.wait(0.4)
+               end
+           end)
+       end
+   end,
+})
+
+-- زر إيقاف الكل
+MainTab:CreateButton({
+   Name = "إيقاف جميع العمليات",
+   Callback = function()
+       _G.AutoArcade = false
+       _G.AutoDefault = false
+       _G.AutoCollectMoney = false
+       _G.AutoATM = false
+       sendStatusNotify("إيقاف الكل", "تم تعطيل الميزات ⚠️")
+   end,
+})
