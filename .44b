@@ -1,7 +1,7 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "سكربت تي",
+   Name = "سكربت تسونامي",
    LoadingTitle = "جاري التشغيل...",
    LoadingSubtitle = "Made by ع",
    ConfigurationSaving = { Enabled = false }
@@ -10,21 +10,34 @@ local Window = Rayfield:CreateWindow({
 -- إظهار رسالة تنبيه عند بداية التشغيل
 Rayfield:Notify({
     Title = "تنبية",
-    Content = "هذا السكربت تجريبي حالياً \Made by ع",
+    Content = "السكربت تجريبي",
     Duration = 5,
     Image = 4483362458,
 })
 
 local MainTab = Window:CreateTab("قائمة التحكم", 4483362458)
-
+local TeleportTab = Window:CreateTab("قائمة التنقل", 4483362458) 
+local PlayerTab = Window:CreateTab("قائمة اللاعب", 4483362458)
 
 -- متغيرات التحكم
 _G.AutoArcade = false
 _G.AutoDefault = false
 _G.AutoCollectMoney = false
 _G.AutoATM = false
+_G.FlyEnabled = false
+_G.FlySpeed = 50 
+_G.AntiAFK = true
 
--- وظيفة جلب الـ Plot ID تلقائياً
+-- قائمة الإحداثيات
+local Locations = {
+    Vector3.new(245.67, 3.31, -135.75), 
+    Vector3.new(340.06, 3.31, -136.75), 
+    Vector3.new(340.06, 3.31, -136.75), 
+    Vector3.new(340.06, 3.31, -136.75), 
+    Vector3.new(925.12, 3.31, -137.01)  
+}
+
+-- وظيفة جلب الـ Plot ID
 local function getMyPlotID()
     local player = game.Players.LocalPlayer
     local foundID = nil
@@ -38,26 +51,51 @@ local function getMyPlotID()
     return foundID or "{02431b3a-5fcf-40e4-90aa-220317656166}"
 end
 
--- وظيفة التنبيه الموحدة مع رسالة "تجريبي"
+-- وظيفة التنبيه
 local function sendStatusNotify(title, status)
     Rayfield:Notify({
         Title = title,
-        Content = status .. "",
+        Content = status,
         Duration = 3,
         Image = 4483362458,
     })
 end
 
--- 1. تجميع الأموال
+-------------------------------------------------------
+-- [ قائمة التنقل - TeleportTab ]
+-------------------------------------------------------
+
+TeleportTab:CreateButton({
+   Name = ".",
+   Callback = function()
+       local character = game.Players.LocalPlayer.Character
+       local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+       
+       if rootPart then
+           for i, pos in ipairs(Locations) do
+               rootPart.CFrame = CFrame.new(pos)
+               task.wait(0.1) -- سرعة قصوى للنقل
+           end
+           Rayfield:Notify({
+               Duration = 2,
+               Image = 4483362458,
+           })
+       else
+       end
+   end,
+})
+
+-------------------------------------------------------
+-- [ قائمة التحكم - MainTab ]
+-------------------------------------------------------
+
 MainTab:CreateToggle({
    Name = "تجميع الأموال تلقائياً",
    CurrentValue = false,
    Flag = "CollectMoneyToggle", 
    Callback = function(Value)
        _G.AutoCollectMoney = Value
-       local statusText = Value and "تم التشغيل ✅" or "تم الإيقاف ❌"
-       sendStatusNotify("تجميع الأموال", statusText)
-       
+       sendStatusNotify("تجميع الأموال", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
                while _G.AutoCollectMoney do
@@ -76,16 +114,13 @@ MainTab:CreateToggle({
    end,
 })
 
--- 2. زر الـ ATM (إيداع + دمج)
 MainTab:CreateToggle({
    Name = "Money",
    CurrentValue = false,
    Flag = "ATMToggle",
    Callback = function(Value)
        _G.AutoATM = Value
-       local statusText = Value and "تم التشغيل ✅" or "تم الإيقاف ❌"
-       sendStatusNotify("نظام Money", statusText)
-       
+       sendStatusNotify("نظام Money", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
                local atmMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("ATM")
@@ -102,16 +137,13 @@ MainTab:CreateToggle({
    end,
 })
 
--- 3. زر الأركيد (إيداع + دمج)
 MainTab:CreateToggle({
    Name = "Arcade",
    CurrentValue = false,
    Flag = "ArcadeToggle", 
    Callback = function(Value)
        _G.AutoArcade = Value
-       local statusText = Value and "تم التشغيل ✅" or "تم الإيقاف ❌"
-       sendStatusNotify("نظام Arcade", statusText)
-       
+       sendStatusNotify("نظام Arcade", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
                local arcadeMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Arcade")
@@ -128,16 +160,13 @@ MainTab:CreateToggle({
    end,
 })
 
--- 4. زر الديفولت (إيداع + دمج)
 MainTab:CreateToggle({
    Name = "Default",
    CurrentValue = false,
    Flag = "DefaultToggle", 
    Callback = function(Value)
        _G.AutoDefault = Value
-       local statusText = Value and "تم التشغيل ✅" or "تم الإيقاف ❌"
-       sendStatusNotify("نظام Default", statusText)
-       
+       sendStatusNotify("نظام Default", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
                local defaultMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Default")
@@ -154,7 +183,6 @@ MainTab:CreateToggle({
    end,
 })
 
--- زر إيقاف الكل
 MainTab:CreateButton({
    Name = "إيقاف جميع العمليات",
    Callback = function()
@@ -163,5 +191,90 @@ MainTab:CreateButton({
        _G.AutoCollectMoney = false
        _G.AutoATM = false
        sendStatusNotify("إيقاف الكل", "تم تعطيل الميزات ⚠️")
+   end,
+})
+
+-------------------------------------------------------
+-- [ قائمة اللاعب - PlayerTab ]
+-------------------------------------------------------
+
+local TimeLabel = PlayerTab:CreateLabel("مدة التشغيل: 0 ساعة، 0 دقيقة، 0 ثانية")
+task.spawn(function()
+    local startTime = tick()
+    while task.wait(1) do
+        local elapsed = math.floor(tick() - startTime)
+        local hours = math.floor(elapsed / 3600)
+        local minutes = math.floor((elapsed % 3600) / 60)
+        local seconds = elapsed % 60
+        TimeLabel:Set("مدة التشغيل: " .. hours .. " ساعة، " .. minutes .. " دقيقة، " .. seconds .. " ثانية")
+    end
+end)
+
+PlayerTab:CreateToggle({
+   Name = "منع الطرد (Anti-AFK)",
+   CurrentValue = true,
+   Flag = "AntiAFK",
+   Callback = function(Value)
+       _G.AntiAFK = Value
+       sendStatusNotify("Anti-AFK", Value and "تم التفعيل" or "تم الإيقاف")
+   end,
+})
+
+PlayerTab:CreateToggle({
+   Name = "تفعيل الطيران",
+   CurrentValue = false,
+   Flag = "FlyToggle",
+   Callback = function(Value)
+       _G.FlyEnabled = Value
+       sendStatusNotify("الطيران", Value and "تم التفعيل ✅" or "تم الإيقاف ❌")
+       
+       local player = game.Players.LocalPlayer
+       local character = player.Character or player.CharacterAdded:Wait()
+       local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+       
+       if Value then
+           task.spawn(function()
+               local bodyVelocity = Instance.new("BodyVelocity")
+               bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+               bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+               bodyVelocity.Parent = humanoidRootPart
+               
+               local bodyGyro = Instance.new("BodyGyro")
+               bodyGyro.P = 9e4
+               bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+               bodyGyro.CFrame = humanoidRootPart.CFrame
+               bodyGyro.Parent = humanoidRootPart
+               
+               while _G.FlyEnabled do
+                   local camera = workspace.CurrentCamera
+                   local moveDirection = Vector3.new(0, 0, 0)
+                   
+                   if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + camera.CFrame.LookVector end
+                   if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection - camera.CFrame.LookVector end
+                   if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection - camera.CFrame.RightVector end
+                   if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + camera.CFrame.RightVector end
+                   if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.Space) then moveDirection = moveDirection + Vector3.new(0, 1, 0) end
+                   if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.LeftShift) then moveDirection = moveDirection - Vector3.new(0, 1, 0) end
+                   
+                   bodyVelocity.Velocity = moveDirection * _G.FlySpeed
+                   bodyGyro.CFrame = camera.CFrame
+                   task.wait()
+               end
+               bodyVelocity:Destroy()
+               bodyGyro:Destroy()
+           end)
+       end
+   end,
+})
+
+PlayerTab:CreateSlider({
+   Name = "سرعة الطيران",
+   Range = {16, 500},
+   Increment = 1,
+   Suffix = "Speed",
+   CurrentValue = 50,
+   Flag = "FlySpeedSlider",
+   Callback = function(Value)
+       _G.FlySpeed = Value
    end,
 })
