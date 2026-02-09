@@ -78,7 +78,7 @@ MainTab:CreateToggle({
 
 -- 2. زر الـ ATM (إيداع + دمج)
 MainTab:CreateToggle({
-   Name = "Money (ATM)",
+   Name = "Money",
    CurrentValue = false,
    Flag = "ATMToggle",
    Callback = function(Value)
