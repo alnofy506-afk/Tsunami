@@ -84,7 +84,7 @@ MainTab:CreateToggle({
    Callback = function(Value)
        _G.AutoATM = Value
        local statusText = Value and "تم التشغيل ✅" or "تم الإيقاف ❌"
-       sendStatusNotify("نظام الـ ATM", statusText)
+       sendStatusNotify("نظام Money", statusText)
        
        if Value then
            task.spawn(function()
@@ -110,7 +110,7 @@ MainTab:CreateToggle({
    Callback = function(Value)
        _G.AutoArcade = Value
        local statusText = Value and "تم التشغيل ✅" or "تم الإيقاف ❌"
-       sendStatusNotify("نظام الأركيد", statusText)
+       sendStatusNotify("نظام Arcade", statusText)
        
        if Value then
            task.spawn(function()
