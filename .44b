@@ -7,7 +7,7 @@ local Window = Rayfield:CreateWindow({
    ConfigurationSaving = { Enabled = false }
 })
 
--- إظهار رسالة تنبيه عند بداية التشغيل (كما هي)
+-- إظهار رسالة تنبيه عند بداية التشغيل
 Rayfield:Notify({
     Title = "تنبية",
     Content = "السكربت تجريبي",
@@ -21,7 +21,7 @@ local PlayerTab = Window:CreateTab("قائمة اللاعب", 4483362458)
 
 -- متغيرات التحكم
 _G.AutoArcade = false
-_G.AutoDefault = false
+_G.AutoDefault = false -- المتغير الجديد للمكينة الأساسية
 _G.AutoCollectMoney = false
 _G.AutoATM = false
 _G.AutoBlackhole = false
@@ -29,7 +29,7 @@ _G.FlyEnabled = false
 _G.FlySpeed = 50 
 _G.AntiAFK = true
 
--- [ تحسين نظام الـ Anti-AFK المطور ]
+-- [ نظام الـ Anti-AFK ]
 local VirtualUser = game:GetService("VirtualUser")
 game:GetService("Players").LocalPlayer.Idled:Connect(function()
     if _G.AntiAFK then
@@ -91,6 +91,30 @@ MainTab:CreateToggle({
    end,
 })
 
+-- زر Default Machine (المضافة حديثاً)
+MainTab:CreateToggle({
+   Name = "Default",
+   CurrentValue = false,
+   Flag = "DefaultToggle",
+   Callback = function(Value)
+       _G.AutoDefault = Value
+       sendStatusNotify("نظام Default", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
+       if Value then
+           task.spawn(function()
+               local defaultMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Default")
+               local net = game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RF/SpawnMachine.Action")
+               while _G.AutoDefault do
+                   pcall(function()
+                       net:InvokeServer("Deposit", defaultMachine)
+                       net:InvokeServer("Combine", defaultMachine)
+                   end)
+                   task.wait(0.4)
+               end
+           end)
+       end
+   end,
+})
+
 -- زر Blackhole
 MainTab:CreateToggle({
    Name = "Blackhole",
@@ -139,7 +163,7 @@ MainTab:CreateToggle({
    end,
 })
 
--- زر Arcade (تمت إعادته)
+-- زر Arcade
 MainTab:CreateToggle({
    Name = "Arcade",
    CurrentValue = false,
@@ -167,6 +191,7 @@ MainTab:CreateButton({
    Name = "إيقاف جميع العمليات",
    Callback = function()
        _G.AutoArcade = false
+       _G.AutoDefault = false
        _G.AutoCollectMoney = false
        _G.AutoATM = false
        _G.AutoBlackhole = false
@@ -175,7 +200,7 @@ MainTab:CreateButton({
 })
 
 -------------------------------------------------------
--- بقية السكربت (التنقل واللاعب وتخطي الكول داون)
+-- بقية السكربت (التنقل واللاعب)
 -------------------------------------------------------
 
 local Locations = {
@@ -194,7 +219,6 @@ TeleportTab:CreateButton({
                rootPart.CFrame = CFrame.new(pos)
                task.wait(0.1)
            end
-           Rayfield:Notify({ Duration = 2, Image = 4483362458 })
        end
    end,
 })
@@ -263,7 +287,7 @@ PlayerTab:CreateSlider({
    Callback = function(Value) _G.FlySpeed = Value end,
 })
 
--- تخطي الكول داون
+-- تخطي الكول داون (ProximityPrompt)
 for _, prompt in pairs(game:GetDescendants()) do
     if prompt:IsA("ProximityPrompt") then prompt.HoldDuration = 0 end
 end
@@ -275,8 +299,8 @@ PlayerTab:CreateButton({
    Name = "تفعيل زووم لا نهائي (Infinite Zoom)",
    Callback = function()
        local player = game.Players.LocalPlayer
-       player.CameraMaxZoomDistance = 100000 -- مسافة هائلة للتبعيد
-       player.CameraMinZoomDistance = 0      -- إمكانية التقريب حتى الاختفاء
+       player.CameraMaxZoomDistance = 100000
+       player.CameraMinZoomDistance = 0
        sendStatusNotify("الزووم", "تم فك حدود الكاميرا ✅")
    end,
 })
