@@ -7,7 +7,7 @@ local Window = Rayfield:CreateWindow({
    ConfigurationSaving = { Enabled = false }
 })
 
--- إظهار رسالة تنبيه عند بداية التشغيل
+-- إظهار رسالة تنبيه عند بداية التشغيل (كما هي)
 Rayfield:Notify({
     Title = "تنبية",
     Content = "السكربت تجريبي",
@@ -24,18 +24,19 @@ _G.AutoArcade = false
 _G.AutoDefault = false
 _G.AutoCollectMoney = false
 _G.AutoATM = false
+_G.AutoBlackhole = false
 _G.FlyEnabled = false
 _G.FlySpeed = 50 
 _G.AntiAFK = true
 
--- قائمة الإحداثيات
-local Locations = {
-    Vector3.new(245.67, 3.31, -135.75), 
-    Vector3.new(340.06, 3.31, -136.75), 
-    Vector3.new(340.06, 3.31, -136.75), 
-    Vector3.new(340.06, 3.31, -136.75), 
-    Vector3.new(925.12, 3.31, -137.01)  
-}
+-- [ تحسين نظام الـ Anti-AFK المطور ]
+local VirtualUser = game:GetService("VirtualUser")
+game:GetService("Players").LocalPlayer.Idled:Connect(function()
+    if _G.AntiAFK then
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+    end
+end)
 
 -- وظيفة جلب الـ Plot ID
 local function getMyPlotID()
@@ -60,30 +61,6 @@ local function sendStatusNotify(title, status)
         Image = 4483362458,
     })
 end
-
--------------------------------------------------------
--- [ قائمة التنقل - TeleportTab ]
--------------------------------------------------------
-
-TeleportTab:CreateButton({
-   Name = ".",
-   Callback = function()
-       local character = game.Players.LocalPlayer.Character
-       local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-       
-       if rootPart then
-           for i, pos in ipairs(Locations) do
-               rootPart.CFrame = CFrame.new(pos)
-               task.wait(0.1) -- سرعة قصوى للنقل
-           end
-           Rayfield:Notify({
-               Duration = 2,
-               Image = 4483362458,
-           })
-       else
-       end
-   end,
-})
 
 -------------------------------------------------------
 -- [ قائمة التحكم - MainTab ]
@@ -114,6 +91,31 @@ MainTab:CreateToggle({
    end,
 })
 
+-- زر Blackhole
+MainTab:CreateToggle({
+   Name = "Blackhole",
+   CurrentValue = false,
+   Flag = "BlackholeToggle",
+   Callback = function(Value)
+       _G.AutoBlackhole = Value
+       sendStatusNotify("نظام Blackhole", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
+       if Value then
+           task.spawn(function()
+               local blackholeMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Blackhole")
+               local net = game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RF/SpawnMachine.Action")
+               while _G.AutoBlackhole do
+                   pcall(function()
+                       net:InvokeServer("Deposit", blackholeMachine)
+                       net:InvokeServer("Combine", blackholeMachine)
+                   end)
+                   task.wait(0.4)
+               end
+           end)
+       end
+   end,
+})
+
+-- زر Money
 MainTab:CreateToggle({
    Name = "Money",
    CurrentValue = false,
@@ -137,6 +139,7 @@ MainTab:CreateToggle({
    end,
 })
 
+-- زر Arcade (تمت إعادته)
 MainTab:CreateToggle({
    Name = "Arcade",
    CurrentValue = false,
@@ -160,43 +163,41 @@ MainTab:CreateToggle({
    end,
 })
 
-MainTab:CreateToggle({
-   Name = "Default",
-   CurrentValue = false,
-   Flag = "DefaultToggle", 
-   Callback = function(Value)
-       _G.AutoDefault = Value
-       sendStatusNotify("نظام Default", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
-       if Value then
-           task.spawn(function()
-               local defaultMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Default")
-               local net = game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RF/SpawnMachine.Action")
-               while _G.AutoDefault do
-                   pcall(function()
-                       net:InvokeServer("Deposit", defaultMachine)
-                       net:InvokeServer("Combine", defaultMachine)
-                   end)
-                   task.wait(0.4)
-               end
-           end)
-       end
-   end,
-})
-
 MainTab:CreateButton({
    Name = "إيقاف جميع العمليات",
    Callback = function()
        _G.AutoArcade = false
-       _G.AutoDefault = false
        _G.AutoCollectMoney = false
        _G.AutoATM = false
+       _G.AutoBlackhole = false
        sendStatusNotify("إيقاف الكل", "تم تعطيل الميزات ⚠️")
    end,
 })
 
 -------------------------------------------------------
--- [ قائمة اللاعب - PlayerTab ]
+-- بقية السكربت (التنقل واللاعب وتخطي الكول داون)
 -------------------------------------------------------
+
+local Locations = {
+    Vector3.new(245.67, 3.31, -135.75), 
+    Vector3.new(340.06, 3.31, -136.75), 
+    Vector3.new(925.12, 3.31, -137.01)  
+}
+
+TeleportTab:CreateButton({
+   Name = ".",
+   Callback = function()
+       local character = game.Players.LocalPlayer.Character
+       local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+       if rootPart then
+           for i, pos in ipairs(Locations) do
+               rootPart.CFrame = CFrame.new(pos)
+               task.wait(0.1)
+           end
+           Rayfield:Notify({ Duration = 2, Image = 4483362458 })
+       end
+   end,
+})
 
 local TimeLabel = PlayerTab:CreateLabel("مدة التشغيل: 0 ساعة، 0 دقيقة، 0 ثانية")
 task.spawn(function()
@@ -226,36 +227,23 @@ PlayerTab:CreateToggle({
    Flag = "FlyToggle",
    Callback = function(Value)
        _G.FlyEnabled = Value
-       sendStatusNotify("الطيران", Value and "تم التفعيل ✅" or "تم الإيقاف ❌")
-       
        local player = game.Players.LocalPlayer
        local character = player.Character or player.CharacterAdded:Wait()
        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-       
        if Value then
            task.spawn(function()
-               local bodyVelocity = Instance.new("BodyVelocity")
-               bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+               local bodyVelocity = Instance.new("BodyVelocity", humanoidRootPart)
                bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-               bodyVelocity.Parent = humanoidRootPart
-               
-               local bodyGyro = Instance.new("BodyGyro")
-               bodyGyro.P = 9e4
+               local bodyGyro = Instance.new("BodyGyro", humanoidRootPart)
                bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-               bodyGyro.CFrame = humanoidRootPart.CFrame
-               bodyGyro.Parent = humanoidRootPart
-               
                while _G.FlyEnabled do
                    local camera = workspace.CurrentCamera
                    local moveDirection = Vector3.new(0, 0, 0)
-                   
-                   if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + camera.CFrame.LookVector end
-                   if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection - camera.CFrame.LookVector end
-                   if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection - camera.CFrame.RightVector end
-                   if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + camera.CFrame.RightVector end
-                   if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.Space) then moveDirection = moveDirection + Vector3.new(0, 1, 0) end
-                   if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.LeftShift) then moveDirection = moveDirection - Vector3.new(0, 1, 0) end
-                   
+                   local UIS = game:GetService("UserInputService")
+                   if UIS:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + camera.CFrame.LookVector end
+                   if UIS:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection - camera.CFrame.LookVector end
+                   if UIS:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection - camera.CFrame.RightVector end
+                   if UIS:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + camera.CFrame.RightVector end
                    bodyVelocity.Velocity = moveDirection * _G.FlySpeed
                    bodyGyro.CFrame = camera.CFrame
                    task.wait()
@@ -271,10 +259,24 @@ PlayerTab:CreateSlider({
    Name = "سرعة الطيران",
    Range = {16, 500},
    Increment = 1,
-   Suffix = "Speed",
    CurrentValue = 50,
-   Flag = "FlySpeedSlider",
-   Callback = function(Value)
-       _G.FlySpeed = Value
+   Callback = function(Value) _G.FlySpeed = Value end,
+})
+
+-- تخطي الكول داون
+for _, prompt in pairs(game:GetDescendants()) do
+    if prompt:IsA("ProximityPrompt") then prompt.HoldDuration = 0 end
+end
+game.DescendantAdded:Connect(function(d)
+    if d:IsA("ProximityPrompt") then d.HoldDuration = 0 end
+end)
+
+PlayerTab:CreateButton({
+   Name = "تفعيل زووم لا نهائي (Infinite Zoom)",
+   Callback = function()
+       local player = game.Players.LocalPlayer
+       player.CameraMaxZoomDistance = 100000 -- مسافة هائلة للتبعيد
+       player.CameraMinZoomDistance = 0      -- إمكانية التقريب حتى الاختفاء
+       sendStatusNotify("الزووم", "تم فك حدود الكاميرا ✅")
    end,
 })
