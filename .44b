@@ -205,11 +205,12 @@ TeleportTab:CreateButton({
        local character = game.Players.LocalPlayer.Character
        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
        if rootPart then
-           local oldPos = rootPart.CFrame
-           rootPart.CFrame = CFrame.new(893.79 | Y: 3.26 | Z: 43.75)
-           task.wait(0.1) 
-           rootPart.CFrame = oldPos
-           sendStatusNotify("انتقال", "تم الانتقال ✅")
+           -- الذهاب للإحداثيات المطلوبة أولاً
+           rootPart.CFrame = CFrame.new(885.54, 3.26, 25.12)
+           task.wait(0.7) 
+           -- العودة لمكانك المحدد
+           rootPart.CFrame = CFrame.new(897.57, 3.31, 139.46)
+           sendStatusNotify("انتقال", "تمت العملية بنجاح ✅")
        end
    end,
 })
