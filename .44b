@@ -222,7 +222,7 @@ TeleportTab:CreateButton({
        if rootPart then
            local oldPos = rootPart.CFrame
            rootPart.CFrame = CFrame.new(912.75, 3.29, -32.62)
-           task.wait(0.3) 
+           task.wait(0.8) 
            rootPart.CFrame = oldPos
            sendStatusNotify("انتقال", "تم الانتقال ✅")
        end
