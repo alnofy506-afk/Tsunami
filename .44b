@@ -206,7 +206,7 @@ TeleportTab:CreateButton({
        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
        if rootPart then
            local oldPos = rootPart.CFrame
-           rootPart.CFrame = CFrame.new(911.66, 3.45, -134.86)
+           rootPart.CFrame = CFrame.new(893.79 | Y: 3.26 | Z: 43.75)
            task.wait(0.1) 
            rootPart.CFrame = oldPos
            sendStatusNotify("انتقال", "تم الانتقال ✅")
