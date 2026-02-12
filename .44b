@@ -1,7 +1,7 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "سكربت تسونامي",
+   Name = "سكربت تسونامي المطور",
    LoadingTitle = "جاري التشغيل...",
    LoadingSubtitle = "Made by ع",
    ConfigurationSaving = { Enabled = false }
@@ -10,7 +10,7 @@ local Window = Rayfield:CreateWindow({
 -- إظهار رسالة تنبيه عند بداية التشغيل
 Rayfield:Notify({
     Title = "تنبية",
-    Content = "السكربت تجريبي",
+    Content = "السكربت يعمل بنجاح بكافة الميزات",
     Duration = 5,
     Image = 4483362458,
 })
@@ -21,7 +21,7 @@ local PlayerTab = Window:CreateTab("قائمة اللاعب", 4483362458)
 
 -- متغيرات التحكم
 _G.AutoArcade = false
-_G.AutoDefault = false -- المتغير الجديد للمكينة الأساسية
+_G.AutoDefault = false 
 _G.AutoCollectMoney = false
 _G.AutoATM = false
 _G.AutoBlackhole = false
@@ -91,7 +91,6 @@ MainTab:CreateToggle({
    end,
 })
 
--- زر Default Machine (المضافة حديثاً)
 MainTab:CreateToggle({
    Name = "Default",
    CurrentValue = false,
@@ -115,7 +114,6 @@ MainTab:CreateToggle({
    end,
 })
 
--- زر Blackhole
 MainTab:CreateToggle({
    Name = "Blackhole",
    CurrentValue = false,
@@ -139,7 +137,6 @@ MainTab:CreateToggle({
    end,
 })
 
--- زر Money
 MainTab:CreateToggle({
    Name = "Money",
    CurrentValue = false,
@@ -163,7 +160,6 @@ MainTab:CreateToggle({
    end,
 })
 
--- زر Arcade
 MainTab:CreateToggle({
    Name = "Arcade",
    CurrentValue = false,
@@ -200,14 +196,8 @@ MainTab:CreateButton({
 })
 
 -------------------------------------------------------
--- بقية السكربت (التنقل واللاعب)
+-- [ قائمة التنقل - TeleportTab ]
 -------------------------------------------------------
-
-local Locations = {
-    Vector3.new(245.67, 3.31, -135.75), 
-    Vector3.new(340.06, 3.31, -136.75), 
-    Vector3.new(925.12, 3.31, -137.01)  
-}
 
 TeleportTab:CreateButton({
    Name = ".",
@@ -215,13 +205,33 @@ TeleportTab:CreateButton({
        local character = game.Players.LocalPlayer.Character
        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
        if rootPart then
-           for i, pos in ipairs(Locations) do
-               rootPart.CFrame = CFrame.new(pos)
-               task.wait(0.1)
-           end
+           local oldPos = rootPart.CFrame
+           rootPart.CFrame = CFrame.new(911.66, 3.45, -134.86)
+           task.wait(0.1) 
+           rootPart.CFrame = oldPos
+           sendStatusNotify("انتقال", "تم الانتقال ✅")
        end
    end,
 })
+
+TeleportTab:CreateButton({
+   Name = "..",
+   Callback = function()
+       local character = game.Players.LocalPlayer.Character
+       local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+       if rootPart then
+           local oldPos = rootPart.CFrame
+           rootPart.CFrame = CFrame.new(912.75, 3.29, -32.62)
+           task.wait(0.3) 
+           rootPart.CFrame = oldPos
+           sendStatusNotify("انتقال", "تم الانتقال ✅")
+       end
+   end,
+})
+
+-------------------------------------------------------
+-- [ قائمة اللاعب - PlayerTab ]
+-------------------------------------------------------
 
 local TimeLabel = PlayerTab:CreateLabel("مدة التشغيل: 0 ساعة، 0 دقيقة، 0 ثانية")
 task.spawn(function()
