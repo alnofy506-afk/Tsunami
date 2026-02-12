@@ -10,7 +10,7 @@ local Window = Rayfield:CreateWindow({
 -- إظهار رسالة تنبيه عند بداية التشغيل
 Rayfield:Notify({
     Title = "تنبية",
-    Content = "السكربت يعمل بنجاح بكافة الميزات",
+    Content = "السكربت تجريبي",
     Duration = 5,
     Image = 4483362458,
 })
