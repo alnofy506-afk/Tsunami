@@ -7,6 +7,16 @@ local Window = Rayfield:CreateWindow({
    ConfigurationSaving = { Enabled = false }
 })
 
+-- وظيفة التنبيه الموحدة
+local function sendStatusNotify(title, status)
+    Rayfield:Notify({
+        Title = title,
+        Content = status,
+        Duration = 3,
+        Image = 4483362458,
+    })
+end
+
 -- إظهار رسالة تنبيه عند بداية التشغيل
 Rayfield:Notify({
     Title = "تنبية",
@@ -22,7 +32,6 @@ local PlayerTab = Window:CreateTab("قائمة اللاعب", 4483362458)
 -- متغيرات التحكم
 _G.AutoArcade = false
 _G.AutoDefault = false 
-_G.AutoCollectMoney = false
 _G.AutoATM = false
 _G.AutoBlackhole = false
 _G.OnlyHearts = false 
@@ -31,7 +40,7 @@ _G.FlyEnabled = false
 _G.FlySpeed = 50 
 _G.AntiAFK = true
 
--- [ وظائف السحب ]
+-- [ وظائف التجميع ]
 local function pullHeart(touch)
     local player = game.Players.LocalPlayer
     local character = player.Character
@@ -64,32 +73,8 @@ local function pullArcadeStuff(touch)
     end
 end
 
--- وظيفة جلب الـ Plot ID
-local function getMyPlotID()
-    local player = game.Players.LocalPlayer
-    local foundID = nil
-    pcall(function()
-        for _, plot in pairs(workspace:WaitForChild("Plots"):GetChildren()) do
-            if plot:FindFirstChild("Owner") and plot.Owner.Value == player then
-                foundID = plot.Name
-            end
-        end
-    end)
-    return foundID or "{02431b3a-5fcf-40e4-90aa-220317656166}"
-end
-
--- وظيفة التنبيه الأصيلة
-local function sendStatusNotify(title, status)
-    Rayfield:Notify({
-        Title = title,
-        Content = status,
-        Duration = 3,
-        Image = 4483362458,
-    })
-end
-
 -------------------------------------------------------
--- [ قائمة التحكم - MainTab ]
+-- [ قائمة التحكم ]
 -------------------------------------------------------
 
 local HeartToggle = MainTab:CreateToggle({
@@ -98,6 +83,7 @@ local HeartToggle = MainTab:CreateToggle({
    Flag = "HeartToggle", 
    Callback = function(Value)
        _G.OnlyHearts = Value
+       sendStatusNotify("تجميع candy", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
                while _G.OnlyHearts do
@@ -107,7 +93,7 @@ local HeartToggle = MainTab:CreateToggle({
                            pullHeart(obj)
                        end
                    end
-                   task.wait(0.5)
+                   task.wait(1.2)
                end
            end)
        end
@@ -120,6 +106,7 @@ local ArcadeCollectToggle = MainTab:CreateToggle({
    Flag = "ArcadeCollectToggle", 
    Callback = function(Value)
        _G.CollectArcadeItems = Value
+       sendStatusNotify("تجميع Arcade", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
                while _G.CollectArcadeItems do
@@ -129,7 +116,7 @@ local ArcadeCollectToggle = MainTab:CreateToggle({
                            pullArcadeStuff(obj)
                        end
                    end
-                   task.wait(0.5)
+                   task.wait(1.2)
                end
            end)
        end
@@ -138,36 +125,13 @@ local ArcadeCollectToggle = MainTab:CreateToggle({
 
 MainTab:CreateSection("الاله")
 
-local MoneyToggle = MainTab:CreateToggle({
-   Name = "تجميع الأموال تلقائياً",
-   CurrentValue = false,
-   Flag = "CollectMoneyToggle", 
-   Callback = function(Value)
-       _G.AutoCollectMoney = Value
-       if Value then
-           task.spawn(function()
-               while _G.AutoCollectMoney do
-                   local currentPlotID = getMyPlotID()
-                   for i = 1, 36 do
-                       if not _G.AutoCollectMoney then break end
-                       pcall(function()
-                           game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RF/Plot.PlotAction"):InvokeServer("Collect Money", currentPlotID, tostring(i))
-                       end)
-                       task.wait(0.01)
-                   end
-                   task.wait(0.5)
-               end
-           end)
-       end
-   end,
-})
-
 local DefaultToggle = MainTab:CreateToggle({
    Name = "Default",
    CurrentValue = false,
    Flag = "DefaultToggle",
    Callback = function(Value)
        _G.AutoDefault = Value
+       sendStatusNotify("Default", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
                local defaultMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Default")
@@ -190,6 +154,7 @@ local BlackholeToggle = MainTab:CreateToggle({
    Flag = "BlackholeToggle",
    Callback = function(Value)
        _G.AutoBlackhole = Value
+       sendStatusNotify("Blackhole", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
                local blackholeMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Blackhole")
@@ -212,6 +177,7 @@ local ATMToggle = MainTab:CreateToggle({
    Flag = "ATMToggle",
    Callback = function(Value)
        _G.AutoATM = Value
+       sendStatusNotify("Money", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
                local atmMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("ATM")
@@ -234,6 +200,7 @@ local ArcadeToggle = MainTab:CreateToggle({
    Flag = "ArcadeToggle", 
    Callback = function(Value)
        _G.AutoArcade = Value
+       sendStatusNotify("Arcade", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
                local arcadeMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Arcade")
@@ -255,12 +222,11 @@ MainTab:CreateButton({
    Callback = function()
        HeartToggle:Set(false)
        ArcadeCollectToggle:Set(false)
-       MoneyToggle:Set(false)
        DefaultToggle:Set(false)
        BlackholeToggle:Set(false)
        ATMToggle:Set(false)
        ArcadeToggle:Set(false)
-       sendStatusNotify("إيقاف الكل", "تم تعطيل الميزات ⚠️")
+       sendStatusNotify("إيقاف الكل", "تم إيقاف جميع العمليات ❌")
    end,
 })
 
@@ -292,7 +258,7 @@ TeleportTab:CreateButton({
            rootPart.CFrame = CFrame.new(912.75, 3.29, -32.62)
            task.wait(0.8) 
            rootPart.CFrame = oldPos
-           sendStatusNotify("انتقال", "تم الانتقال ✅")
+           sendStatusNotify("انتقال", "تمت العملية بنجاح ✅")
        end
    end,
 })
@@ -312,12 +278,10 @@ TeleportTab:CreateButton({
                CFrame.new(346.84, 3.31, -134.54),
                CFrame.new(321.78, 3.26, -4.15)
            }
-           -- تنفيذ التنقل
            for _, point in ipairs(points) do
                rootPart.CFrame = point
                task.wait(0.8)
            end
-           -- إرسال نفس إشعار الزر "."
            sendStatusNotify("انتقال", "تمت العملية بنجاح ✅")
        end
    end,
@@ -345,6 +309,7 @@ PlayerTab:CreateToggle({
    Flag = "AntiAFK",
    Callback = function(Value)
        _G.AntiAFK = Value
+       sendStatusNotify("منع الطرد", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
    end,
 })
 
@@ -354,6 +319,7 @@ PlayerTab:CreateToggle({
    Flag = "FlyToggle",
    Callback = function(Value)
        _G.FlyEnabled = Value
+       sendStatusNotify("الطيران", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        local player = game.Players.LocalPlayer
        local character = player.Character or player.CharacterAdded:Wait()
        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
@@ -394,9 +360,6 @@ PlayerTab:CreateSlider({
 for _, prompt in pairs(game:GetDescendants()) do
     if prompt:IsA("ProximityPrompt") then prompt.HoldDuration = 0 end
 end
-game.DescendantAdded:Connect(function(d)
-    if d:IsA("ProximityPrompt") then d.HoldDuration = 0 end
-end)
 
 PlayerTab:CreateButton({
    Name = "تفعيل زووم لا نهائي (Infinite Zoom)",
@@ -404,6 +367,6 @@ PlayerTab:CreateButton({
        local player = game.Players.LocalPlayer
        player.CameraMaxZoomDistance = 100000
        player.CameraMinZoomDistance = 0
-       sendStatusNotify("الزووم", "تم فك حدود الكاميرا ✅")
+       sendStatusNotify("الزووم", "تم التشغيل ✅")
    end,
 })
