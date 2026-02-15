@@ -10,7 +10,7 @@ local Window = Rayfield:CreateWindow({
 -- إظهار رسالة تنبيه عند بداية التشغيل
 Rayfield:Notify({
     Title = "تنبية",
-    Content = "تم إضافة تجميع في ايفنت candy",
+    Content = "تم إضافة تجميع في ايفنت arcade candy",
     Duration = 5,
     Image = 4483362458,
 })
@@ -25,23 +25,21 @@ _G.AutoDefault = false
 _G.AutoCollectMoney = false
 _G.AutoATM = false
 _G.AutoBlackhole = false
-_G.OnlyHearts = false -- ميزة القلوب الجديدة
+_G.OnlyHearts = false 
+_G.CollectArcadeItems = false
 _G.FlyEnabled = false
 _G.FlySpeed = 50 
 _G.AntiAFK = true
 
--- [ وظيفة سحب القلب الذكية ]
+-- [ وظائف السحب ]
 local function pullHeart(touch)
     local player = game.Players.LocalPlayer
     local character = player.Character
     local root = character and character:FindFirstChild("HumanoidRootPart")
-    
     if not root then return end
-    
     local item = touch.Parent
     if item and item:IsA("BasePart") then
         local name = item.Name:lower()
-        -- فحص إذا كان الشيء قلب (بالاسم أو اسم الموديل الأب)
         if name:find("heart") or (item.Parent and item.Parent.Name:lower():find("heart")) then
             firetouchinterest(root, item, 0)
             task.wait()
@@ -50,14 +48,21 @@ local function pullHeart(touch)
     end
 end
 
--- [ نظام الـ Anti-AFK ]
-local VirtualUser = game:GetService("VirtualUser")
-game:GetService("Players").LocalPlayer.Idled:Connect(function()
-    if _G.AntiAFK then
-        VirtualUser:CaptureController()
-        VirtualUser:ClickButton2(Vector2.new())
+local function pullArcadeStuff(touch)
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    local item = touch.Parent
+    if item and item:IsA("BasePart") then
+        local name = item.Name:lower()
+        if name:find("ticket") or name:find("arcade") or name:find("controller") or name:find("remote") or name:find("joystick") then
+            firetouchinterest(root, item, 0)
+            task.wait()
+            firetouchinterest(root, item, 1)
+        end
     end
-end)
+end
 
 -- وظيفة جلب الـ Plot ID
 local function getMyPlotID()
@@ -73,7 +78,7 @@ local function getMyPlotID()
     return foundID or "{02431b3a-5fcf-40e4-90aa-220317656166}"
 end
 
--- وظيفة التنبيه
+-- وظيفة التنبيه الأصيلة
 local function sendStatusNotify(title, status)
     Rayfield:Notify({
         Title = title,
@@ -87,15 +92,12 @@ end
 -- [ قائمة التحكم - MainTab ]
 -------------------------------------------------------
 
--- زر تشغيل صيد القلوب الجديد ❤️
-MainTab:CreateToggle({
-   Name = "تجميع ❤️",
+local HeartToggle = MainTab:CreateToggle({
+   Name = "تجميع candy ❤️",
    CurrentValue = false,
    Flag = "HeartToggle", 
    Callback = function(Value)
        _G.OnlyHearts = Value
-       sendStatusNotify("نظام القلوب", Value and "بدأ البحث عن القلوب ❤️" or "تم الإيقاف ❌")
-       
        if Value then
            task.spawn(function()
                while _G.OnlyHearts do
@@ -105,7 +107,29 @@ MainTab:CreateToggle({
                            pullHeart(obj)
                        end
                    end
-                   task.wait(0.5) -- حماية من اللاق
+                   task.wait(0.5)
+               end
+           end)
+       end
+   end,
+})
+
+local ArcadeCollectToggle = MainTab:CreateToggle({
+   Name = "تجميع Arcade 🕹️",
+   CurrentValue = false,
+   Flag = "ArcadeCollectToggle", 
+   Callback = function(Value)
+       _G.CollectArcadeItems = Value
+       if Value then
+           task.spawn(function()
+               while _G.CollectArcadeItems do
+                   for _, obj in pairs(workspace:GetDescendants()) do
+                       if not _G.CollectArcadeItems then break end
+                       if obj:IsA("TouchTransmitter") or obj.Name == "TouchInterest" then
+                           pullArcadeStuff(obj)
+                       end
+                   end
+                   task.wait(0.5)
                end
            end)
        end
@@ -114,13 +138,12 @@ MainTab:CreateToggle({
 
 MainTab:CreateSection("الاله")
 
-MainTab:CreateToggle({
+local MoneyToggle = MainTab:CreateToggle({
    Name = "تجميع الأموال تلقائياً",
    CurrentValue = false,
    Flag = "CollectMoneyToggle", 
    Callback = function(Value)
        _G.AutoCollectMoney = Value
-       sendStatusNotify("تجميع الأموال", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
                while _G.AutoCollectMoney do
@@ -139,8 +162,7 @@ MainTab:CreateToggle({
    end,
 })
 
--- (بقية الأزرار: Default, Blackhole, ATM, Arcade بقيت كما هي في سكربتك الأصلي)
-MainTab:CreateToggle({
+local DefaultToggle = MainTab:CreateToggle({
    Name = "Default",
    CurrentValue = false,
    Flag = "DefaultToggle",
@@ -162,7 +184,7 @@ MainTab:CreateToggle({
    end,
 })
 
-MainTab:CreateToggle({
+local BlackholeToggle = MainTab:CreateToggle({
    Name = "Blackhole",
    CurrentValue = false,
    Flag = "BlackholeToggle",
@@ -184,7 +206,7 @@ MainTab:CreateToggle({
    end,
 })
 
-MainTab:CreateToggle({
+local ATMToggle = MainTab:CreateToggle({
    Name = "Money",
    CurrentValue = false,
    Flag = "ATMToggle",
@@ -206,7 +228,7 @@ MainTab:CreateToggle({
    end,
 })
 
-MainTab:CreateToggle({
+local ArcadeToggle = MainTab:CreateToggle({
    Name = "Arcade",
    CurrentValue = false,
    Flag = "ArcadeToggle", 
@@ -231,18 +253,19 @@ MainTab:CreateToggle({
 MainTab:CreateButton({
    Name = "إيقاف جميع العمليات",
    Callback = function()
-       _G.AutoArcade = false
-       _G.AutoDefault = false
-       _G.AutoCollectMoney = false
-       _G.AutoATM = false
-       _G.AutoBlackhole = false
-       _G.OnlyHearts = false
+       HeartToggle:Set(false)
+       ArcadeCollectToggle:Set(false)
+       MoneyToggle:Set(false)
+       DefaultToggle:Set(false)
+       BlackholeToggle:Set(false)
+       ATMToggle:Set(false)
+       ArcadeToggle:Set(false)
        sendStatusNotify("إيقاف الكل", "تم تعطيل الميزات ⚠️")
    end,
 })
 
 -------------------------------------------------------
--- [ قائمة التنقل واللاعب بقيت كما هي ]
+-- [ قائمة التنقل ]
 -------------------------------------------------------
 
 TeleportTab:CreateButton({
@@ -273,6 +296,36 @@ TeleportTab:CreateButton({
        end
    end,
 })
+
+TeleportTab:CreateButton({
+   Name = "...",
+   Callback = function()
+       local character = game.Players.LocalPlayer.Character
+       local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+       if rootPart then
+           local points = {
+               CFrame.new(346.84, 3.31, -134.54),
+               CFrame.new(482.36, 3.31, -134.72),
+               CFrame.new(650.01, 3.31, -138.24),
+               CFrame.new(920.03, 3.31, -139.15),
+               CFrame.new(1870.66, 3.31, -139.07),
+               CFrame.new(346.84, 3.31, -134.54),
+               CFrame.new(321.78, 3.26, -4.15)
+           }
+           -- تنفيذ التنقل
+           for _, point in ipairs(points) do
+               rootPart.CFrame = point
+               task.wait(0.8)
+           end
+           -- إرسال نفس إشعار الزر "."
+           sendStatusNotify("انتقال", "تمت العملية بنجاح ✅")
+       end
+   end,
+})
+
+-------------------------------------------------------
+-- [ قائمة اللاعب ]
+-------------------------------------------------------
 
 local TimeLabel = PlayerTab:CreateLabel("مدة التشغيل: 0 ساعة، 0 دقيقة، 0 ثانية")
 task.spawn(function()
