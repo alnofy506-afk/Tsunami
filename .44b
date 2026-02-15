@@ -356,10 +356,23 @@ PlayerTab:CreateSlider({
    Callback = function(Value) _G.FlySpeed = Value end,
 })
 
--- تخطي الكول داون (ProximityPrompt)
+-------------------------------------------------------
+-- [ إضافة: تخطي الكول داون (ProximityPrompt) ]
+-------------------------------------------------------
+
+-- تخطي الكول داون للموجودين حالياً
 for _, prompt in pairs(game:GetDescendants()) do
-    if prompt:IsA("ProximityPrompt") then prompt.HoldDuration = 0 end
+    if prompt:IsA("ProximityPrompt") then
+        prompt.HoldDuration = 0
+    end
 end
+
+-- تخطي الكول داون لأي ProximityPrompt جديد يضاف للعالم
+game.DescendantAdded:Connect(function(descendant)
+    if descendant:IsA("ProximityPrompt") then
+        descendant.HoldDuration = 0
+    end
+end)
 
 PlayerTab:CreateButton({
    Name = "تفعيل زووم لا نهائي (Infinite Zoom)",
