@@ -7,6 +7,32 @@ local Window = Rayfield:CreateWindow({
    ConfigurationSaving = { Enabled = false }
 })
 
+-- [ إضافة: ميزة الأرضية المخفية بدون إشعارات ]
+_G.PlatformEnabled = false
+local player = game.Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local pPart = Instance.new("Part")
+pPart.Size = Vector3.new(15, 1, 15)
+pPart.Anchored = true
+pPart.CanCollide = true
+pPart.Transparency = 1 
+pPart.Parent = nil
+
+task.spawn(function()
+    while task.wait() do
+        if _G.PlatformEnabled then
+            local char = player.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            if root then
+                pPart.Parent = workspace
+                pPart.CFrame = root.CFrame * CFrame.new(0, -3.5, 0)
+            end
+        else
+            pPart.Parent = nil
+        end
+    end
+end)
+
 -- وظيفة التنبيه الموحدة
 local function sendStatusNotify(title, status)
     Rayfield:Notify({
@@ -16,6 +42,16 @@ local function sendStatusNotify(title, status)
         Image = 4483362458,
     })
 end
+
+-- تفعيل اختصار حرف R (صامت بدون إشعار)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.R then
+        _G.PlatformEnabled = not _G.PlatformEnabled
+        if _G.PlatformToggleObject then 
+            _G.PlatformToggleObject:Set(_G.PlatformEnabled) 
+        end
+    end
+end)
 
 -- إظهار رسالة تنبيه عند بداية التشغيل
 Rayfield:Notify({
@@ -42,7 +78,6 @@ _G.AntiAFK = true
 
 -- [ وظائف التجميع ]
 local function pullHeart(touch)
-    local player = game.Players.LocalPlayer
     local character = player.Character
     local root = character and character:FindFirstChild("HumanoidRootPart")
     if not root then return end
@@ -58,7 +93,6 @@ local function pullHeart(touch)
 end
 
 local function pullArcadeStuff(touch)
-    local player = game.Players.LocalPlayer
     local character = player.Character
     local root = character and character:FindFirstChild("HumanoidRootPart")
     if not root then return end
@@ -134,12 +168,12 @@ local DefaultToggle = MainTab:CreateToggle({
        sendStatusNotify("Default", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
-               local defaultMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Default")
+               local machine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Default")
                local net = game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RF/SpawnMachine.Action")
                while _G.AutoDefault do
                    pcall(function()
-                       net:InvokeServer("Deposit", defaultMachine)
-                       net:InvokeServer("Combine", defaultMachine)
+                       net:InvokeServer("Deposit", machine)
+                       net:InvokeServer("Combine", machine)
                    end)
                    task.wait(0.4)
                end
@@ -157,12 +191,12 @@ local BlackholeToggle = MainTab:CreateToggle({
        sendStatusNotify("Blackhole", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
-               local blackholeMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Blackhole")
+               local machine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Blackhole")
                local net = game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RF/SpawnMachine.Action")
                while _G.AutoBlackhole do
                    pcall(function()
-                       net:InvokeServer("Deposit", blackholeMachine)
-                       net:InvokeServer("Combine", blackholeMachine)
+                       net:InvokeServer("Deposit", machine)
+                       net:InvokeServer("Combine", machine)
                    end)
                    task.wait(0.4)
                end
@@ -180,12 +214,12 @@ local ATMToggle = MainTab:CreateToggle({
        sendStatusNotify("Money", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
-               local atmMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("ATM")
+               local machine = workspace:WaitForChild("SpawnMachines"):WaitForChild("ATM")
                local net = game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RF/SpawnMachine.Action")
                while _G.AutoATM do
                    pcall(function()
-                       net:InvokeServer("Deposit", atmMachine)
-                       net:InvokeServer("Combine", atmMachine)
+                       net:InvokeServer("Deposit", machine)
+                       net:InvokeServer("Combine", machine)
                    end)
                    task.wait(0.5)
                end
@@ -203,12 +237,12 @@ local ArcadeToggle = MainTab:CreateToggle({
        sendStatusNotify("Arcade", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
-               local arcadeMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Arcade")
+               local machine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Arcade")
                local net = game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RF/SpawnMachine.Action")
                while _G.AutoArcade do
                    pcall(function()
-                       net:InvokeServer("Deposit", arcadeMachine)
-                       net:InvokeServer("Combine", arcadeMachine)
+                       net:InvokeServer("Deposit", machine)
+                       net:InvokeServer("Combine", machine)
                    end)
                    task.wait(0.4)
                end
@@ -234,16 +268,23 @@ MainTab:CreateButton({
 -- [ قائمة التنقل ]
 -------------------------------------------------------
 
+_G.PlatformToggleObject = TeleportTab:CreateToggle({
+   Name = "!",
+   CurrentValue = false,
+   Flag = "PlatformToggle",
+   Callback = function(Value)
+       _G.PlatformEnabled = Value
+   end,
+})
+
 TeleportTab:CreateButton({
    Name = ".",
    Callback = function()
-       local character = game.Players.LocalPlayer.Character
-       local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-       if rootPart then
-           rootPart.CFrame = CFrame.new(885.54, 3.26, 25.12)
+       local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+       if root then
+           root.CFrame = CFrame.new(885.54, 3.26, 25.12)
            task.wait(0.7) 
-           rootPart.CFrame = CFrame.new(897.57, 3.31, 139.46)
-           sendStatusNotify("انتقال", "تمت العملية بنجاح ✅")
+           root.CFrame = CFrame.new(897.57, 3.31, 139.46)
        end
    end,
 })
@@ -251,14 +292,12 @@ TeleportTab:CreateButton({
 TeleportTab:CreateButton({
    Name = "..",
    Callback = function()
-       local character = game.Players.LocalPlayer.Character
-       local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-       if rootPart then
-           local oldPos = rootPart.CFrame
-           rootPart.CFrame = CFrame.new(912.75, 3.29, -32.62)
+       local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+       if root then
+           local oldPos = root.CFrame
+           root.CFrame = CFrame.new(912.75, 3.29, -32.62)
            task.wait(0.8) 
-           rootPart.CFrame = oldPos
-           sendStatusNotify("انتقال", "تمت العملية بنجاح ✅")
+           root.CFrame = oldPos
        end
    end,
 })
@@ -266,23 +305,20 @@ TeleportTab:CreateButton({
 TeleportTab:CreateButton({
    Name = "...",
    Callback = function()
-       local character = game.Players.LocalPlayer.Character
-       local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-       if rootPart then
+       local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+       if root then
            local points = {
                CFrame.new(346.84, 3.31, -134.54),
                CFrame.new(482.36, 3.31, -134.72),
                CFrame.new(650.01, 3.31, -138.24),
                CFrame.new(920.03, 3.31, -139.15),
                CFrame.new(1870.66, 3.31, -139.07),
-               CFrame.new(346.84, 3.31, -134.54),
                CFrame.new(321.78, 3.26, -4.15)
            }
            for _, point in ipairs(points) do
-               rootPart.CFrame = point
+               root.CFrame = point
                task.wait(0.8)
            end
-           sendStatusNotify("انتقال", "تمت العملية بنجاح ✅")
        end
    end,
 })
@@ -309,7 +345,6 @@ PlayerTab:CreateToggle({
    Flag = "AntiAFK",
    Callback = function(Value)
        _G.AntiAFK = Value
-       sendStatusNotify("منع الطرد", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
    end,
 })
 
@@ -319,16 +354,14 @@ PlayerTab:CreateToggle({
    Flag = "FlyToggle",
    Callback = function(Value)
        _G.FlyEnabled = Value
-       sendStatusNotify("الطيران", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
-       local player = game.Players.LocalPlayer
        local character = player.Character or player.CharacterAdded:Wait()
-       local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+       local hRoot = character:WaitForChild("HumanoidRootPart")
        if Value then
            task.spawn(function()
-               local bodyVelocity = Instance.new("BodyVelocity", humanoidRootPart)
-               bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-               local bodyGyro = Instance.new("BodyGyro", humanoidRootPart)
-               bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+               local bv = Instance.new("BodyVelocity", hRoot)
+               bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+               local bg = Instance.new("BodyGyro", hRoot)
+               bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
                while _G.FlyEnabled do
                    local camera = workspace.CurrentCamera
                    local moveDirection = Vector3.new(0, 0, 0)
@@ -337,12 +370,12 @@ PlayerTab:CreateToggle({
                    if UIS:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection - camera.CFrame.LookVector end
                    if UIS:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection - camera.CFrame.RightVector end
                    if UIS:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + camera.CFrame.RightVector end
-                   bodyVelocity.Velocity = moveDirection * _G.FlySpeed
-                   bodyGyro.CFrame = camera.CFrame
+                   bv.Velocity = moveDirection * _G.FlySpeed
+                   bg.CFrame = camera.CFrame
                    task.wait()
                end
-               bodyVelocity:Destroy()
-               bodyGyro:Destroy()
+               bv:Destroy()
+               bg:Destroy()
            end)
        end
    end,
@@ -356,30 +389,20 @@ PlayerTab:CreateSlider({
    Callback = function(Value) _G.FlySpeed = Value end,
 })
 
--------------------------------------------------------
--- [ إضافة: تخطي الكول داون (ProximityPrompt) ]
--------------------------------------------------------
-
--- تخطي الكول داون للموجودين حالياً
+-- تخطي وقت الانتظار (ProximityPrompt)
 for _, prompt in pairs(game:GetDescendants()) do
     if prompt:IsA("ProximityPrompt") then
         prompt.HoldDuration = 0
     end
 end
-
--- تخطي الكول داون لأي ProximityPrompt جديد يضاف للعالم
-game.DescendantAdded:Connect(function(descendant)
-    if descendant:IsA("ProximityPrompt") then
-        descendant.HoldDuration = 0
-    end
+game.DescendantAdded:Connect(function(d)
+    if d:IsA("ProximityPrompt") then d.HoldDuration = 0 end
 end)
 
 PlayerTab:CreateButton({
    Name = "تفعيل زووم لا نهائي (Infinite Zoom)",
    Callback = function()
-       local player = game.Players.LocalPlayer
        player.CameraMaxZoomDistance = 100000
        player.CameraMinZoomDistance = 0
-       sendStatusNotify("الزووم", "تم التشغيل ✅")
    end,
 })
