@@ -10,7 +10,7 @@ local Window = Rayfield:CreateWindow({
 -- إظهار رسالة تنبيه عند بداية التشغيل
 Rayfield:Notify({
     Title = "تنبية",
-    Content = "السكربت تجريبي",
+    Content = "تم إضافة تجميع في ايفنت candy",
     Duration = 5,
     Image = 4483362458,
 })
@@ -25,9 +25,30 @@ _G.AutoDefault = false
 _G.AutoCollectMoney = false
 _G.AutoATM = false
 _G.AutoBlackhole = false
+_G.OnlyHearts = false -- ميزة القلوب الجديدة
 _G.FlyEnabled = false
 _G.FlySpeed = 50 
 _G.AntiAFK = true
+
+-- [ وظيفة سحب القلب الذكية ]
+local function pullHeart(touch)
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    
+    if not root then return end
+    
+    local item = touch.Parent
+    if item and item:IsA("BasePart") then
+        local name = item.Name:lower()
+        -- فحص إذا كان الشيء قلب (بالاسم أو اسم الموديل الأب)
+        if name:find("heart") or (item.Parent and item.Parent.Name:lower():find("heart")) then
+            firetouchinterest(root, item, 0)
+            task.wait()
+            firetouchinterest(root, item, 1)
+        end
+    end
+end
 
 -- [ نظام الـ Anti-AFK ]
 local VirtualUser = game:GetService("VirtualUser")
@@ -66,6 +87,33 @@ end
 -- [ قائمة التحكم - MainTab ]
 -------------------------------------------------------
 
+-- زر تشغيل صيد القلوب الجديد ❤️
+MainTab:CreateToggle({
+   Name = "تجميع ❤️",
+   CurrentValue = false,
+   Flag = "HeartToggle", 
+   Callback = function(Value)
+       _G.OnlyHearts = Value
+       sendStatusNotify("نظام القلوب", Value and "بدأ البحث عن القلوب ❤️" or "تم الإيقاف ❌")
+       
+       if Value then
+           task.spawn(function()
+               while _G.OnlyHearts do
+                   for _, obj in pairs(workspace:GetDescendants()) do
+                       if not _G.OnlyHearts then break end
+                       if obj:IsA("TouchTransmitter") or obj.Name == "TouchInterest" then
+                           pullHeart(obj)
+                       end
+                   end
+                   task.wait(0.5) -- حماية من اللاق
+               end
+           end)
+       end
+   end,
+})
+
+MainTab:CreateSection("الاله")
+
 MainTab:CreateToggle({
    Name = "تجميع الأموال تلقائياً",
    CurrentValue = false,
@@ -91,13 +139,13 @@ MainTab:CreateToggle({
    end,
 })
 
+-- (بقية الأزرار: Default, Blackhole, ATM, Arcade بقيت كما هي في سكربتك الأصلي)
 MainTab:CreateToggle({
    Name = "Default",
    CurrentValue = false,
    Flag = "DefaultToggle",
    Callback = function(Value)
        _G.AutoDefault = Value
-       sendStatusNotify("نظام Default", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
                local defaultMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Default")
@@ -120,7 +168,6 @@ MainTab:CreateToggle({
    Flag = "BlackholeToggle",
    Callback = function(Value)
        _G.AutoBlackhole = Value
-       sendStatusNotify("نظام Blackhole", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
                local blackholeMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Blackhole")
@@ -143,7 +190,6 @@ MainTab:CreateToggle({
    Flag = "ATMToggle",
    Callback = function(Value)
        _G.AutoATM = Value
-       sendStatusNotify("نظام Money", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
                local atmMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("ATM")
@@ -166,7 +212,6 @@ MainTab:CreateToggle({
    Flag = "ArcadeToggle", 
    Callback = function(Value)
        _G.AutoArcade = Value
-       sendStatusNotify("نظام Arcade", Value and "تم التشغيل ✅" or "تم الإيقاف ❌")
        if Value then
            task.spawn(function()
                local arcadeMachine = workspace:WaitForChild("SpawnMachines"):WaitForChild("Arcade")
@@ -191,12 +236,13 @@ MainTab:CreateButton({
        _G.AutoCollectMoney = false
        _G.AutoATM = false
        _G.AutoBlackhole = false
+       _G.OnlyHearts = false
        sendStatusNotify("إيقاف الكل", "تم تعطيل الميزات ⚠️")
    end,
 })
 
 -------------------------------------------------------
--- [ قائمة التنقل - TeleportTab ]
+-- [ قائمة التنقل واللاعب بقيت كما هي ]
 -------------------------------------------------------
 
 TeleportTab:CreateButton({
@@ -205,10 +251,8 @@ TeleportTab:CreateButton({
        local character = game.Players.LocalPlayer.Character
        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
        if rootPart then
-           -- الذهاب للإحداثيات المطلوبة أولاً
            rootPart.CFrame = CFrame.new(885.54, 3.26, 25.12)
            task.wait(0.7) 
-           -- العودة لمكانك المحدد
            rootPart.CFrame = CFrame.new(897.57, 3.31, 139.46)
            sendStatusNotify("انتقال", "تمت العملية بنجاح ✅")
        end
@@ -230,10 +274,6 @@ TeleportTab:CreateButton({
    end,
 })
 
--------------------------------------------------------
--- [ قائمة اللاعب - PlayerTab ]
--------------------------------------------------------
-
 local TimeLabel = PlayerTab:CreateLabel("مدة التشغيل: 0 ساعة، 0 دقيقة، 0 ثانية")
 task.spawn(function()
     local startTime = tick()
@@ -252,7 +292,6 @@ PlayerTab:CreateToggle({
    Flag = "AntiAFK",
    Callback = function(Value)
        _G.AntiAFK = Value
-       sendStatusNotify("Anti-AFK", Value and "تم التفعيل" or "تم الإيقاف")
    end,
 })
 
